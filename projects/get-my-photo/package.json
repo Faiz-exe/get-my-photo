@@ -1,6 +1,6 @@
 {
   "name": "get-my-photo",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "peerDependencies": {
     "@angular/common": "^8.2.0",
     "@angular/core": "^8.2.0"
@@ -13,5 +13,9 @@
     "image",
     "web cam"
   ],
-  "author": "Faizal Hussain <hussainfaizal131@gmail.com>"
+  "author": "Faizal Hussain <hussainfaizal131@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Faiz-exe/get-my-photo"
+  }
 }
