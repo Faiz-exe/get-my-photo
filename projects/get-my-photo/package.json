@@ -1,0 +1,17 @@
+{
+  "name": "get-my-photo",
+  "version": "0.0.7",
+  "peerDependencies": {
+    "@angular/common": "^8.2.0",
+    "@angular/core": "^8.2.0"
+  },
+  "keywords": [
+    "photo",
+    "get photo",
+    "base 64",
+    "web api",
+    "image",
+    "web cam"
+  ],
+  "author": "Faizal Hussain <hussainfaizal131@gmail.com>"
+}

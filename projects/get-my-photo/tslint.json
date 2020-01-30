@@ -1,0 +1,17 @@
+{
+  "extends": "../../tslint.json",
+  "rules": {
+    "directive-selector": [
+      true,
+      "attribute",
+      "getMyphoto",
+      "camelCase"
+    ],
+    "component-selector": [
+      true,
+      "element",
+      "get-myphoto",
+      "kebab-case"
+    ]
+  }
+}
