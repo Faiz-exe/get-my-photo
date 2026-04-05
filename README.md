@@ -1,115 +1,212 @@
-# get-my-photo
+# `get-my-photo`
 
-Angular library that captures still images from the device camera using the [MediaDevices `getUserMedia`](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) API. It emits a data URL you can upload or display, with optional download and preview.
+| Field | Value |
+|--------|--------|
+| **Package name** | `get-my-photo` |
+| **Version** | `0.1.0` |
+| **Author** | Faizal Hussain (`hussainfaizal131@gmail.com`) |
+| **Repository** | [github.com/Faiz-exe/get-my-photo](https://github.com/Faiz-exe/get-my-photo) |
 
-**Stack:** Angular **21**, TypeScript **5.9**, RxJS **7**, `ng-packagr` for the publishable package.
+## Package description
 
-## Requirements
+Angular library for capturing a still image from the device **webcam** in the browser. It uses [`navigator.mediaDevices.getUserMedia()`](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia), draws the video frame to a canvas, and emits a **data URL** (`string`) you can bind, upload, or persist. Optional behaviors include **preview**, **automatic download**, and **error messaging** when camera access is denied.
 
-- **Node.js** 20.19+ (LTS recommended). Angular 21 supports the current Node LTS line; avoid odd-numbered Node releases for production builds.
-- A **secure context** (HTTPS or `localhost`) so the browser allows camera access.
+**Keywords:** `photo`, `get photo`, `base 64`, `web api`, `image`, `web cam`
 
-## Quick start
+---
+
+## Peer dependencies
+
+This package expects your app to already provide compatible Angular packages:
+
+| Package | Range |
+|---------|--------|
+| `@angular/core` | `^21.0.0` |
+| `@angular/common` | `^21.0.0` |
+
+Install matching versions in your application (for example `21.x` aligned with your workspace).
+
+## Runtime dependency
+
+| Package | Notes |
+|---------|--------|
+| `tslib` | Listed in the published `package.json` for the compiled output helpers. |
+
+---
+
+## Installation
+
+### From npm (after you publish)
 
 ```bash
-git clone https://github.com/Faiz-exe/get-my-photo.git
-cd get-my-photo
-npm install
+npm install get-my-photo
 ```
 
-Build the library (output: `dist/get-my-photo/`):
+### From this monorepo (local development)
 
-```bash
-npm run build:lib
-```
+1. Clone the repo and install workspace dependencies:
 
-Run the demo application (serves at `http://localhost:4200/`):
+   ```bash
+   git clone https://github.com/Faiz-exe/get-my-photo.git
+   cd get-my-photo
+   npm install
+   ```
 
-```bash
-npm start
-```
+2. Build the library (output: `dist/get-my-photo/`):
 
-Production build for the demo app:
+   ```bash
+   npm run build:lib
+   ```
 
-```bash
-ng build lib-getMyPhoto --configuration production
-```
+3. In another project, depend on the folder or use `npm link` / `file:` path to `dist/get-my-photo` as your workflow prefers.
 
-## Use in your Angular app
+---
 
-1. Build or install the package so it resolves as `get-my-photo` (this workspace maps it via `tsconfig` paths; published consumers use the npm package name).
+## Public API (what this package exports)
 
-2. Import the module:
+Everything below is re-exported from the package entry (`public-api.ts`).
+
+| Export | Kind | Description |
+|--------|------|-------------|
+| `GetMyPhotoModule` | `NgModule` | Import this in your `AppModule` (or a feature module). Declares and exports the components below. |
+| `GetMyPhotoComponent` | Component | Placeholder/demo-style component (`getMyphoto-getMyPhoto`). |
+| `GetPhotoComponent` | Component | Main camera capture UI (`get-photo`). |
+| `GetMyPhotoService` | `Injectable` | Injectable stub (`providedIn: 'root'`); extend or use for future shared logic. |
+
+### Template selectors
+
+| Selector | Component |
+|----------|-----------|
+| `get-photo` | `GetPhotoComponent` — primary capture UI |
+| `getMyphoto-getMyPhoto` | `GetMyPhotoComponent` — simple “works” placeholder |
+
+---
+
+## Using `get-photo` in your app
+
+### 1. Import the module
 
 ```typescript
 import { GetMyPhotoModule } from 'get-my-photo';
 
 @NgModule({
   imports: [GetMyPhotoModule],
-  // ...
 })
 export class AppModule {}
 ```
 
-3. Use the `get-photo` component in a template (see `src/app/app.component.html` for a full example):
+### 2. Add the component to a template
+
+Minimal pattern (start camera, handle capture output):
 
 ```html
 <get-photo
-  [turnCamOn]="{ camOn: true }"
-  (outputImage)="handleImage($event)"
-  [previewImage]="true"
-  [width]="640"
-  [height]="480">
+  [turnCamOn]="camState"
+  [triggerEvent]="captureState"
+  (outputImage)="onImage($event)">
 </get-photo>
 ```
 
-### `get-photo` inputs and outputs
+```typescript
+camState = { camOn: true };
+captureState = { capture: false };
 
-| Member | Kind | Purpose |
-|--------|------|---------|
-| `FileType` | `@Input()` | Reserved for file-type hints. |
-| `errorMessage` | `@Input()` | Message shown when camera access fails and `showError` is true. |
-| `fileName` | `@Input()` | Download filename when saving from the canvas (defaults to a timestamped PNG). |
-| `width` / `height` | `@Input()` | Capture dimensions in pixels (falls back to video element size). |
-| `showError` | `@Input()` | Show an error state when permission is denied. |
-| `previewImage` | `@Input()` | After capture, show preview and stop the camera. |
-| `saveOnCLick` | `@Input()` | Trigger download when capturing. |
-| `turnCamOn` | `@Input()` set | Pass `{ camOn: true }` to start the camera. |
-| `turnCamoff` | `@Input()` set | Pass `{ turnOff: true }` to stop the camera. |
-| `triggerEvent` | `@Input()` set | Pass `{ capture: true }` to grab a frame while the stream is active. |
-| `retake` | `@Input()` set | Pass `{ retake: true }` to return from preview to live video. |
-| `outputImage` | `@Output()` | Emits a data URL string of the captured image. |
+onImage(dataUrl: string) {
+  // dataUrl is a base64 data URL from canvas.toBlob → FileReader
+}
 
-## Workspace layout
+triggerCapture() {
+  this.captureState = { capture: true };
+}
+```
 
-| Path | Role |
-|------|------|
-| `projects/get-my-photo/` | Library source and `ng-package.json` |
-| `src/` | Demo application that consumes the library |
-| `dist/get-my-photo/` | Built npm package (after `npm run build:lib`) |
+See the demo in `src/app/app.component.html` for buttons that toggle `turnCamOn`, `triggerEvent`, `turnCamoff`, and `retake`.
 
-## Scripts
+---
+
+## Component API — `GetPhotoComponent` (`get-photo`)
+
+### Outputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| `outputImage` | `EventEmitter<string>` | Fires with a **data URL** string of the captured frame. |
+
+### Inputs (plain)
+
+| Name | Type | Default / notes |
+|------|------|------------------|
+| `FileType` | `string` | Present in the API; reserved / future use. |
+| `errorMessage` | `string` | Shown when `showError` is true and camera access fails. |
+| `fileName` | `string` | Filename used when `saveOnCLick` triggers a download (defaults to `image-<timestamp>.png` if empty). |
+| `width` | `number` | Capture width in pixels; if omitted, uses the video element width. |
+| `height` | `number` | Capture height in pixels; if omitted, uses the video element height. |
+| `showError` | `boolean` | When true, permission errors surface in the template. |
+| `previewImage` | `boolean` | When true, after capture shows the still image and stops the camera. |
+| `saveOnCLick` | `boolean` | When true, capture also triggers a file download. |
+
+### Inputs (setters — pass objects from the parent)
+
+Callers typically swap objects so Angular detects changes (e.g. `{ camOn: true }` → new object when toggling).
+
+| Setter | When it runs | Expected payload shape |
+|--------|----------------|-------------------------|
+| `turnCamOn` | Start camera | `{ camOn: true }` |
+| `turnCamoff` | Stop camera | `{ turnOff: true }` (requires camera was on) |
+| `triggerEvent` | Capture frame | `{ capture: true }` (requires camera on and video active) |
+| `retake` | Back to live video from preview | `{ retake: true }` |
+
+> **Note:** The input name is spelled `saveOnCLick` (capital “CL”) in source; use that exact name in templates.
+
+### Browser behavior
+
+- **Secure context:** Camera access requires **HTTPS** or **`http://localhost`**.
+- **Permissions:** The user must allow camera access; otherwise the component can set `error` and optionally show `errorMessage` when `showError` is true.
+
+---
+
+## Package layout (this repository)
+
+| Path | Purpose |
+|------|---------|
+| `projects/get-my-photo/` | Library source, `ng-package.json`, and publishable `package.json` |
+| `projects/get-my-photo/src/public-api.ts` | Public export surface |
+| `dist/get-my-photo/` | **Generated npm package** after `npm run build:lib` |
+| `src/` | Demo Angular app consuming the library |
+
+---
+
+## Scripts (workspace root)
 
 | Script | Command |
 |--------|---------|
-| `npm start` | `ng serve` — demo app |
-| `npm run build:lib` | `ng build getMyPhoto` — library package |
-| `npm run build` | `ng build` — default Angular CLI project build |
-| `npm test` | `ng test` — unit tests (Karma) |
+| `npm start` | `ng serve` — run the demo app (`http://localhost:4200/`) |
+| `npm run build:lib` | `ng build getMyPhoto` — build the library into `dist/get-my-photo/` |
+| `npm run build` | `ng build` — build the default application project |
+| `npm test` | `ng test` — unit tests |
+
+---
 
 ## Publishing
 
-After `npm run build:lib`, publish from the generated folder (adjust registry and version in `projects/get-my-photo/package.json`):
+1. Bump **`version`** in `projects/get-my-photo/package.json` as needed.
+2. Run `npm run build:lib`.
+3. Publish from the build output:
 
-```bash
-cd dist/get-my-photo && npm publish
-```
+   ```bash
+   cd dist/get-my-photo && npm publish
+   ```
 
-## Author & repository
+Use `--access public` on the first publish if the scope/name requires it.
 
-- **Author:** Faizal Hussain (`hussainfaizal131@gmail.com`)
-- **Repository:** [github.com/Faiz-exe/get-my-photo](https://github.com/Faiz-exe/get-my-photo)
+---
+
+## Tooling alignment (this repo)
+
+The workspace that builds **get-my-photo** uses **Angular 21**, **TypeScript ~5.9**, **RxJS 7**, **ng-packagr 21**, and **Node.js ≥ 20.19** (see root `package.json` `engines`). Consumers only need to satisfy the **peer dependencies** above.
+
+---
 
 ## License
 
-Add a `LICENSE` file in the repository when you choose terms for this package.
+Add a `LICENSE` file when you choose terms for distribution.
