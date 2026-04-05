@@ -2,15 +2,21 @@
 
 
 <div>
-    <video autoplay id="captureFrame" *ngIf='videoPreview' ></video>
+  @if (videoPreview) {
+    <video autoplay id="captureFrame" ></video>
+  }
 
-    <img [src]='src' *ngIf='imagepreview'>
-    <h3 *ngIf='error && showError'>{{errorMessage}}</h3>
+  @if (imagepreview) {
+    <img [src]='src'>
+  }
+  @if (error && showError) {
+    <h3>{{errorMessage}}</h3>
+  }
 
 </div>
 
 
 
-    <!-- <canvas id="output" style="display: none;"></canvas> -->
-  
+<!-- <canvas id="output" style="display: none;"></canvas> -->
+
 

@@ -7,16 +7,12 @@
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "es2020",
+    "moduleResolution": "bundler",
     "importHelpers": true,
-    "target": "es2015",
+    "target": "ES2022",
     "typeRoots": [
       "node_modules/@types"
-    ],
-    "lib": [
-      "es2018",
-      "dom"
     ],
     "paths": {
       "get-my-photo": [
@@ -25,7 +21,8 @@
       "get-my-photo/*": [
         "dist/get-my-photo/*"
       ]
-    }
+    },
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,

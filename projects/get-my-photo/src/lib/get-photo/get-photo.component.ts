@@ -1,10 +1,11 @@
-import { Component, OnInit, Input, EventEmitter, Output, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, EventEmitter, Output, ChangeDetectorRef } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'get-photo',
-  templateUrl: './get-photo.component.html',
-  styleUrls: ['./get-photo.component.css']
+    selector: 'get-photo',
+    templateUrl: './get-photo.component.html',
+    styleUrls: ['./get-photo.component.css'],
+    standalone: false
 })
 export class GetPhotoComponent  {
 
