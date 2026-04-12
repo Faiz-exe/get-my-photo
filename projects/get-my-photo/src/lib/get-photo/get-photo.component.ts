@@ -14,6 +14,12 @@ export interface CamerasEnumeratedEvent {
   devices: MediaDeviceInfo[];
 }
 
+export interface VideoRecordedEvent {
+  blob: Blob;
+  mimeType: string;
+  extension: string;
+}
+
 @Component({
   selector: 'get-photo',
   templateUrl: './get-photo.component.html',
@@ -33,6 +39,13 @@ export class GetPhotoComponent implements OnChanges {
 
   private activeStream: MediaStream | null = null;
 
+  private mediaRecorder: MediaRecorder | null = null;
+  private recordedChunks: Blob[] = [];
+  private pendingEmitRecordedVideo = false;
+  private lastRecorderMime = 'video/webm';
+
+  videoRecording = false;
+
   @Input() cameraDeviceId: string | null | undefined;
 
   @Input() public FileType: string;
@@ -45,8 +58,14 @@ export class GetPhotoComponent implements OnChanges {
   @Input() public saveOnCLick: boolean;
   @Input() public captureFit: 'contain' | 'cover' = 'contain';
 
+  @Input() public cssFilter = '';
+
+  @Input() public saveVideoOnStop = false;
+
   @Output() outputImage: EventEmitter<any> = new EventEmitter<any>();
   @Output() camerasEnumerated = new EventEmitter<CamerasEnumeratedEvent>();
+  @Output() videoRecorded = new EventEmitter<VideoRecordedEvent>();
+  @Output() videoRecordingChange = new EventEmitter<boolean>();
 
   @Input() set turnCamoff(data) {
     if (data && data.turnOff && this.isInitiallyOn) {
@@ -82,10 +101,31 @@ export class GetPhotoComponent implements OnChanges {
     }
   }
 
+  @Input() set startVideoRecord(data: { start?: boolean } | null) {
+    if (data?.start && this.isInitiallyOn && this.videoPreview && this.activeStream) {
+      this.beginVideoRecording();
+    }
+  }
+
+  @Input() set stopVideoRecord(data: { stop?: boolean } | null) {
+    if (data?.stop) {
+      this.endVideoRecording(true);
+    }
+  }
+
   constructor(
     public sanitizer: DomSanitizer,
     private cdRef: ChangeDetectorRef,
   ) {}
+
+  get videoFilterStyle(): string {
+    return this.cssFilter?.trim() ?? '';
+  }
+
+  private canvasFilterValue(): string {
+    const t = this.cssFilter?.trim();
+    return t ? t : 'none';
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     const ch = changes['cameraDeviceId'];
@@ -112,7 +152,157 @@ export class GetPhotoComponent implements OnChanges {
     return { video: true, audio: false };
   }
 
+  private pickRecorderMime(): string {
+    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) {
+      return '';
+    }
+    const candidates = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+      'video/mp4',
+    ];
+    for (const c of candidates) {
+      if (MediaRecorder.isTypeSupported(c)) {
+        return c;
+      }
+    }
+    return '';
+  }
+
+  private clearRecorderFlags(): void {
+    this.recordedChunks = [];
+    this.pendingEmitRecordedVideo = false;
+    if (this.videoRecording) {
+      this.videoRecording = false;
+      this.videoRecordingChange.emit(false);
+    }
+  }
+
+  /**
+   * Tear down recorder without emitting a file. Clears handlers so async `onstop`
+   * does not race with a new MediaRecorder.
+   */
+  private hardStopRecorderNoEmit(): void {
+    this.pendingEmitRecordedVideo = false;
+    const mr = this.mediaRecorder;
+    if (!mr) {
+      return;
+    }
+    mr.ondataavailable = null;
+    mr.onstop = null;
+    mr.onerror = null;
+    try {
+      if (mr.state !== 'inactive') {
+        mr.stop();
+      }
+    } catch {
+      /* ignore */
+    }
+    this.mediaRecorder = null;
+    this.clearRecorderFlags();
+  }
+
+  private beginVideoRecording(): void {
+    if (typeof MediaRecorder === 'undefined') {
+      console.warn('get-photo: MediaRecorder is not available');
+      return;
+    }
+    if (!this.activeStream || this.videoRecording) {
+      return;
+    }
+    this.hardStopRecorderNoEmit();
+
+    const mime = this.pickRecorderMime();
+    const opts: MediaRecorderOptions = mime ? { mimeType: mime } : {};
+    let mr: MediaRecorder;
+    try {
+      mr = new MediaRecorder(this.activeStream, opts);
+    } catch {
+      try {
+        mr = new MediaRecorder(this.activeStream);
+      } catch (e) {
+        console.error('get-photo: MediaRecorder constructor failed', e);
+        return;
+      }
+    }
+
+    this.recordedChunks = [];
+    mr.ondataavailable = (ev: BlobEvent) => {
+      if (ev.data?.size) {
+        this.recordedChunks.push(ev.data);
+      }
+    };
+    mr.onerror = (ev) => {
+      console.error('get-photo: MediaRecorder error', ev);
+    };
+    mr.onstop = () => this.onMediaRecorderStopped(mr);
+
+    this.mediaRecorder = mr;
+    this.lastRecorderMime = mr.mimeType || mime || 'video/webm';
+
+    try {
+      mr.start(250);
+      this.videoRecording = true;
+      this.videoRecordingChange.emit(true);
+      this.cdRef.markForCheck();
+    } catch (e) {
+      console.error('get-photo: MediaRecorder.start failed', e);
+      this.mediaRecorder = null;
+      this.clearRecorderFlags();
+    }
+  }
+
+  private endVideoRecording(emitBlob: boolean): void {
+    const mr = this.mediaRecorder;
+    if (!mr || mr.state === 'inactive') {
+      return;
+    }
+    this.pendingEmitRecordedVideo = emitBlob;
+    try {
+      mr.stop();
+    } catch {
+      this.onMediaRecorderStopped(mr);
+    }
+  }
+
+  private onMediaRecorderStopped(mr: MediaRecorder): void {
+    if (this.mediaRecorder !== mr) {
+      return;
+    }
+    const mime = mr.mimeType || this.lastRecorderMime || 'video/webm';
+    const chunks = this.recordedChunks.slice();
+    const shouldEmit = this.pendingEmitRecordedVideo;
+
+    this.mediaRecorder = null;
+    this.clearRecorderFlags();
+    this.cdRef.markForCheck();
+
+    if (!shouldEmit || chunks.length === 0) {
+      return;
+    }
+    const blob = new Blob(chunks, { type: mime });
+    const extension = mime.includes('mp4') ? 'mp4' : 'webm';
+    this.videoRecorded.emit({ blob, mimeType: mime, extension });
+    if (this.saveVideoOnStop) {
+      this.downloadVideoBlob(blob, extension);
+    }
+  }
+
+  private downloadVideoBlob(blob: Blob, extension: string): void {
+    const base =
+      this.fileName && this.fileName.trim()
+        ? this.fileName.replace(/\.(png|jpe?g|webp|webm|mp4)$/i, '')
+        : `video-${Date.now()}`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${base}.${extension}`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   private stopActiveStream(): void {
+    this.hardStopRecorderNoEmit();
     if (this.activeStream) {
       this.activeStream.getTracks().forEach((t) => t.stop());
       this.activeStream = null;
@@ -207,7 +397,9 @@ export class GetPhotoComponent implements OnChanges {
     this.outputCanvas.height = outH;
 
     const useFit = this.width != null && this.height != null;
+    const f = this.canvasFilterValue();
     if (useFit && this.captureFit === 'cover') {
+      this.context.filter = f;
       const scale = Math.max(outW / vw, outH / vh);
       const drawW = vw * scale;
       const drawH = vh * scale;
@@ -215,6 +407,7 @@ export class GetPhotoComponent implements OnChanges {
       const dy = (outH - drawH) / 2;
       this.context.drawImage(video, 0, 0, vw, vh, dx, dy, drawW, drawH);
     } else if (useFit && this.captureFit === 'contain') {
+      this.context.filter = 'none';
       const scale = Math.min(outW / vw, outH / vh);
       const drawW = vw * scale;
       const drawH = vh * scale;
@@ -222,10 +415,13 @@ export class GetPhotoComponent implements OnChanges {
       const dy = (outH - drawH) / 2;
       this.context.fillStyle = '#000';
       this.context.fillRect(0, 0, outW, outH);
+      this.context.filter = f;
       this.context.drawImage(video, 0, 0, vw, vh, dx, dy, drawW, drawH);
     } else {
+      this.context.filter = f;
       this.context.drawImage(video, 0, 0, vw, vh, 0, 0, outW, outH);
     }
+    this.context.filter = 'none';
     if (this.saveOnCLick) {
       this.downloadImage();
     }
@@ -249,7 +445,11 @@ export class GetPhotoComponent implements OnChanges {
   }
 
   stopCam() {
-    this.stopActiveStream();
+    this.hardStopRecorderNoEmit();
+    if (this.activeStream) {
+      this.activeStream.getTracks().forEach((t) => t.stop());
+      this.activeStream = null;
+    }
     const el =
       this.captureFrame ??
       (document.getElementById('captureFrame') as HTMLVideoElement | null);

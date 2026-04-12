@@ -1,6 +1,10 @@
 <div class="get-photo-root">
   @if (videoPreview) {
-    <video autoplay playsinline id="captureFrame"></video>
+    <video
+      autoplay
+      playsinline
+      id="captureFrame"
+      [style.filter]="videoFilterStyle || null"></video>
   }
 
   @if (imagepreview) {

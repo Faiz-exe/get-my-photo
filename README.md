@@ -6,11 +6,14 @@ Capture photos from the browser camera in Angular apps.
 
 ## Features
 
-- Start/stop webcam stream from parent component
-- Capture current frame and emit as base64 data URL
-- Optional in-component preview mode
-- Optional automatic download of captured image
-- Configurable output width, height, and filename
+- Start/stop webcam stream from the parent (trigger inputs)
+- Capture current frame and emit a **base64 data URL** (`outputImage`)
+- Optional **in-component** still preview (`previewImage`) and automatic image download (`saveOnCLick`)
+- **Video recording** via `MediaRecorder` (`startVideoRecord` / `stopVideoRecord`, `videoRecorded`, `saveVideoOnStop`)
+- **CSS `filter`** on live video and on canvas still capture (`cssFilter`)
+- Optional **camera device** binding (`cameraDeviceId`) plus **`camerasEnumerated`** for building your own device list
+- **`captureFit`** (`contain` | `cover`) when both `width` and `height` are set
+- Configurable output **width**, **height**, and **fileName**
 
 ## Installation
 
@@ -107,6 +110,52 @@ Use the component:
 
 The same template works for both standalone and NgModule setups.
 
+### Video recording (optional)
+
+Bind trigger objects (use a **new object reference** each time so setters run), listen for the blob, and stop the recorder before tearing down the camera when possible:
+
+```ts
+import type { VideoRecordedEvent } from 'get-my-photo';
+
+startRecord = { start: true };
+stopRecord = { stop: true };
+
+onVideo(ev: VideoRecordedEvent) {
+  const url = URL.createObjectURL(ev.blob);
+  // play, upload, or save — then URL.revokeObjectURL(url)
+}
+```
+
+```html
+<get-photo
+  …
+  [startVideoRecord]="startRecord"
+  [stopVideoRecord]="stopRecord"
+  [saveVideoOnStop]="false"
+  (videoRecorded)="onVideo($event)"
+  (videoRecordingChange)="recording = $event">
+</get-photo>
+```
+
+See **Inputs / Outputs** below for full detail. MIME/container support is browser-dependent (often WebM; Safari may use MP4 when supported).
+
+## Demo app (this repository)
+
+The sample app in this repo is a **playground**: live preview on the left, **Component props** on the right (every `get-photo` input), plus camera enumeration and an active-device selector that bind `cameraDeviceId` on the library.
+
+**Demo toolbar mode** (first control in the props panel) only changes **which buttons** appear under the preview—it is **not** part of the npm package API:
+
+| Mode | What you see under the camera |
+|------|--------------------------------|
+| **Both** | Turn on, Capture, Record, Stop recording, Retake, Turn off |
+| **Capture only** | Stills workflow: Capture and Retake; record buttons hidden |
+| **Record only** | Video workflow: Record and Stop recording; Capture / Retake hidden |
+| **Capture on record** | Record controls always; **Capture** and **Retake** only while `videoRecording` is true |
+
+The demo also shows **Last capture** and **Last recording** panels wired to `outputImage` and `videoRecorded`.
+
+Run locally: `npm start` (or `ng serve` for the `lib-getMyPhoto` application project).
+
 ## API
 
 ### Selector
@@ -123,6 +172,7 @@ The same template works for both standalone and NgModule setups.
 | `width` | `number` | Output width in pixels. If only `width` is set, `height` is derived from the camera aspect ratio. Defaults to the stream's `videoWidth`. |
 | `height` | `number` | Output height in pixels. If only `height` is set, `width` is derived from the camera aspect ratio. Defaults to the stream's `videoHeight`. |
 | `captureFit` | `string` | When **both** `width` and `height` are set: `contain` (default) scales the frame to fit inside the box with letterboxing; `cover` scales to fill the box and crops. Preserves aspect ratio so the image is not stretched. |
+| `cssFilter` | `string` | Optional CSS `filter` string (e.g. `grayscale(1)`). Applied to the live `<video>` and to canvas capture via `CanvasRenderingContext2D.filter` so downloaded / emitted images match what you see. Empty = no filter. |
 | `showError` | `boolean` | Shows error text on permission failure. |
 | `previewImage` | `boolean` | Shows captured image preview and stops camera. |
 | `saveOnCLick` | `boolean` | Automatically downloads the image on capture. |
@@ -131,8 +181,13 @@ The same template works for both standalone and NgModule setups.
 | `turnCamoff` | `object` | Trigger with `{ turnOff: true }` to stop camera. |
 | `triggerEvent` | `object` | Trigger with `{ capture: true }` to capture current frame. |
 | `retake` | `object` | Trigger with `{ retake: true }` to return to live camera after preview. |
+| `startVideoRecord` | `object` | Trigger with `{ start: true }` while the live stream is active to begin **`MediaRecorder`** capture (no audio; same video track as preview). |
+| `stopVideoRecord` | `object` | Trigger with `{ stop: true }` to stop recording, finalize chunks, and emit **`videoRecorded`** (and optional download if `saveVideoOnStop` is true). |
+| `saveVideoOnStop` | `boolean` | When true, after a **user-intended** stop (`stopVideoRecord`), the library also downloads the file using `fileName` as a base (extension from MIME, e.g. `.webm` / `.mp4`). |
 
 > Note: The input is named `saveOnCLick` (capital `CL`) to match the package API.
+
+Recording uses the browser’s supported MIME types (often **WebM** on Chrome/Firefox; **Safari** may prefer **MP4** when supported). Stopping the camera or restarting the stream ends recording **without** emitting a file.
 
 ### Outputs
 
@@ -140,6 +195,8 @@ The same template works for both standalone and NgModule setups.
 |---|---|---|
 | `outputImage` | `EventEmitter<string>` | Emits captured image as base64 data URL. |
 | `camerasEnumerated` | `EventEmitter<CamerasEnumeratedEvent>` | Fires after each successful stream open (and after enumeration), with `count` and the full `devices` list (`videoinput` entries from `enumerateDevices`). Use this to build your own UI or logging. |
+| `videoRecorded` | `EventEmitter<VideoRecordedEvent>` | Emits `{ blob, mimeType, extension }` when recording stops via **`stopVideoRecord`**. |
+| `videoRecordingChange` | `EventEmitter<boolean>` | `true` while **`MediaRecorder`** is active; `false` when idle or after teardown. |
 
 ## Exports
 
@@ -147,6 +204,7 @@ The package exports:
 
 - **`GetPhotoComponent`** — standalone; main camera UI (`get-photo`).
 - **`CamerasEnumeratedEvent`** — type payload for `camerasEnumerated` (`count` + `devices`).
+- **`VideoRecordedEvent`** — `{ blob, mimeType, extension }` from `videoRecorded`.
 - **`GetMyPhotoComponent`** — standalone; simple placeholder shell.
 - **`GetMyPhotoModule`** — optional NgModule that re-exports the above for legacy apps.
 - **`GetMyPhotoService`** — injectable helper (`providedIn: 'root'`).
@@ -167,8 +225,9 @@ Local check: `npm run build:pages` writes to `dist/lib-getMyPhoto/` (and copies 
 
 ## Browser requirements
 
-- Camera APIs require secure context (`https://` or `http://localhost`)
-- User must grant camera permission
+- Camera (and usually **`MediaRecorder`**) need a **secure context** (`https://` or `http://localhost`)
+- User must grant **camera** permission
+- Video recording quality and container (**WebM** vs **MP4**) depend on the browser; there is **no audio** track in the current implementation
 
 ## Author
 

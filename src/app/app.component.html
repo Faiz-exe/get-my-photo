@@ -3,8 +3,9 @@
     <p class="eyebrow">npm package · local tryout</p>
     <h1 class="hero-title">{{ title }}</h1>
     <p class="hero-copy">
-      Turn the camera on, capture a frame, download if you want. The right column is only bindings so
-      you can see how each input behaves — nothing fancy runs until you use the buttons.
+      Turn the camera on, capture a frame or record video, download if you want. Use <strong>Demo toolbar mode</strong>
+      in the props panel to show only stills, only recording, both, or stills while a recording is active.
+      The right column is bindings so you can see how each input behaves.
     </p>
   </header>
 
@@ -86,14 +87,40 @@
               [fileName]="fileName"
               [FileType]="fileType"
               [previewImage]="previewImage"
-              [cameraDeviceId]="cameraDeviceId">
+              [cameraDeviceId]="cameraDeviceId"
+              [cssFilter]="effectiveCssFilter"
+              [startVideoRecord]="startVideoRecordPayload"
+              [stopVideoRecord]="stopVideoRecordPayload"
+              [saveVideoOnStop]="saveVideoOnStop"
+              (videoRecorded)="onVideoRecorded($event)"
+              (videoRecordingChange)="onVideoRecordingChange($event)">
             </get-photo>
           </div>
 
           <div class="toolbar" role="group" aria-label="Camera controls">
             <button type="button" class="btn btn--primary" (click)="startCamera()">Turn on</button>
-            <button type="button" class="btn" (click)="captureFrame()" [disabled]="!cameraActive">Capture</button>
-            <button type="button" class="btn" (click)="retake()" [disabled]="!cameraActive">Retake</button>
+            @if (showStillsToolbar()) {
+              <button type="button" class="btn" (click)="captureFrame()" [disabled]="!cameraActive">Capture</button>
+            }
+            @if (showRecordToolbar()) {
+              <button
+                type="button"
+                class="btn"
+                (click)="startVideoRecording()"
+                [disabled]="!cameraActive || videoRecording">
+                Record
+              </button>
+              <button
+                type="button"
+                class="btn"
+                (click)="stopVideoRecording()"
+                [disabled]="!cameraActive || !videoRecording">
+                Stop recording
+              </button>
+            }
+            @if (showStillsToolbar()) {
+              <button type="button" class="btn" (click)="retake()" [disabled]="!cameraActive">Retake</button>
+            }
             <button type="button" class="btn btn--ghost" (click)="stopCamera()">Turn off</button>
           </div>
         </section>
@@ -120,6 +147,27 @@
             </div>
           }
         </section>
+
+        <section class="card preview-card" aria-labelledby="video-preview-heading">
+          <div class="card-head">
+            <h2 id="video-preview-heading" class="card-title">Last recording (app)</h2>
+            @if (lastVideoSrc) {
+              <button type="button" class="linkish" (click)="clearVideoPreview()">Clear</button>
+            }
+          </div>
+          @if (lastVideoSrc) {
+            <figure class="preview-frame preview-frame--video">
+              <video [src]="lastVideoSrc" controls playsinline></video>
+            </figure>
+          } @else {
+            <div class="preview-empty">
+              <p>No recording yet</p>
+              <p class="muted">
+                <code>videoRecorded</code> provides a <code>Blob</code>; this panel plays it via an object URL.
+              </p>
+            </div>
+          }
+        </section>
       </div>
     </div>
 
@@ -132,6 +180,17 @@
 
         <div class="props-body">
           <div class="props-stack">
+            <div class="field">
+              <label for="prop-demo-toolbar">Demo toolbar mode</label>
+              <select id="prop-demo-toolbar" name="demoToolbarMode" [(ngModel)]="demoToolbarMode">
+                <option value="both">Both — capture and record</option>
+                <option value="capture">Capture only — stills</option>
+                <option value="record">Record only — video</option>
+                <option value="capture-on-record">Capture on record — stills only while recording</option>
+              </select>
+              <span class="hint">Demo app only. Hides toolbar buttons; the library still supports every API.</span>
+            </div>
+
             <div class="field">
               <label for="prop-fileType">FileType</label>
               <input
@@ -163,6 +222,30 @@
                 <option value="contain">contain (letterbox)</option>
                 <option value="cover">cover (crop)</option>
               </select>
+            </div>
+
+            <div class="field">
+              <label for="prop-filter-preset">cssFilter (preset)</label>
+              <select id="prop-filter-preset" name="filterPreset" [(ngModel)]="filterPreset">
+                <option value="">None</option>
+                <option value="grayscale(1)">Grayscale</option>
+                <option value="sepia(0.85)">Sepia</option>
+                <option value="contrast(1.35) saturate(1.1)">Punch / contrast</option>
+                <option value="brightness(1.1)">Brighter</option>
+                <option value="blur(1.5px)">Light blur</option>
+                <option value="invert(1) hue-rotate(180deg)">Invert (odd look)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="prop-filter-custom">cssFilter (custom)</label>
+              <input
+                id="prop-filter-custom"
+                type="text"
+                name="filterCustom"
+                [(ngModel)]="filterCustom"
+                placeholder="Overrides preset, e.g. hue-rotate(90deg)" />
+              <span class="hint">Same syntax as CSS <code>filter</code>. Empty uses the preset only.</span>
             </div>
 
             <div class="field">
@@ -200,6 +283,16 @@
             <div class="field field--check">
               <input id="prop-saveOnCLick" type="checkbox" name="saveOnCLick" [(ngModel)]="saveOnCLick" />
               <label for="prop-saveOnCLick">saveOnCLick</label>
+            </div>
+
+            <div class="field field--check">
+              <input
+                id="prop-saveVideoOnStop"
+                type="checkbox"
+                name="saveVideoOnStop"
+                [(ngModel)]="saveVideoOnStop" />
+              <label for="prop-saveVideoOnStop">saveVideoOnStop</label>
+              <span class="hint">When set, the library also triggers a download when recording stops with emit.</span>
             </div>
           </div>
         </div>
