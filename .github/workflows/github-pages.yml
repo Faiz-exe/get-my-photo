@@ -1,3 +1,7 @@
+# Publishes the Angular demo from dist/lib-getMyPhoto.
+# In the repo: Settings → Pages → Build and deployment → Source MUST be
+# "GitHub Actions". If Source is "Deploy from a branch", GitHub serves the
+# repo root (README) instead of this artifact — switch to GitHub Actions.
 name: GitHub Pages
 
 on:
@@ -29,6 +33,13 @@ jobs:
         run: |
           npm ci
           npm run build:pages
+
+      - name: Verify Pages artifact
+        run: |
+          test -f dist/lib-getMyPhoto/index.html
+          test -f dist/lib-getMyPhoto/404.html
+          test -f dist/lib-getMyPhoto/.nojekyll
+          ls -la dist/lib-getMyPhoto
 
       - uses: actions/upload-pages-artifact@v3
         with:
