@@ -1,6 +1,8 @@
 {
   "name": "get-my-photo",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "description": "Angular component for webcam still capture and MediaRecorder video, with optional filters and device selection.",
+  "license": "MIT",
   "peerDependencies": {
     "@angular/common": "^21.0.0",
     "@angular/core": "^21.0.0"
@@ -19,6 +21,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Faiz-exe/get-my-photo"
+    "url": "git+https://github.com/Faiz-exe/get-my-photo.git"
   }
 }

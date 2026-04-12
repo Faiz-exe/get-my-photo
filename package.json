@@ -11,6 +11,7 @@
     "build": "ng build",
     "build:lib": "ng build getMyPhoto",
     "build:pages": "ng build lib-getMyPhoto --configuration github-pages && cp dist/lib-getMyPhoto/index.html dist/lib-getMyPhoto/404.html && node -e \"require('fs').writeFileSync('dist/lib-getMyPhoto/.nojekyll','')\"",
+    "publish:lib": "ng build getMyPhoto && npm publish ./dist/get-my-photo",
     "test": "ng test"
   },
   "private": true,
