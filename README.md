@@ -1,13 +1,17 @@
 # get-my-photo
 
-Capture photos from the browser camera in Angular apps.
+Capture photos and short video clips from the browser camera in Angular apps.
 
 [npm package](https://www.npmjs.com/package/get-my-photo) | [GitHub repository](https://github.com/Faiz-exe/get-my-photo)
 
 ## Features
 
-- Start/stop webcam stream from the parent (trigger inputs)
-- Capture current frame and emit a **base64 data URL** (`outputImage`)
+**Under the hood** this package uses standard browser media APIs—no native plugins: **[`getUserMedia`](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia)** ([Media Capture and Streams](https://developer.mozilla.org/en-US/docs/Web/API/Media_Capture_and_Streams_API)) for the live webcam, the **[Canvas API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)** to sample still frames, and **[`MediaRecorder`](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder)** to encode video. Those are the same platform pieces often used alongside **WebRTC** for camera access; here there is **no** `RTCPeerConnection`, signaling, or networking—only **local** capture from the user’s device.
+
+**You can use it to** capture still photos, record video clips, add **CSS filters** to the live preview and to saved stills, switch **cameras** when the browser exposes them, and tune output size and framing.
+
+- Start/stop the webcam stream from the parent (**trigger inputs**)
+- Capture the current frame and emit a **base64 data URL** (`outputImage`)
 - Optional **in-component** still preview (`previewImage`) and automatic image download (`saveOnCLick`)
 - **Video recording** via `MediaRecorder` (`startVideoRecord` / `stopVideoRecord`, `videoRecorded`, `saveVideoOnStop`)
 - **CSS `filter`** on live video and on canvas still capture (`cssFilter`)
