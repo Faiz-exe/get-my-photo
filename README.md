@@ -218,3 +218,4 @@ This repository's demo app uses **`bootstrapApplication`**, **`provideRouter`**,
 ## Author
 
 Faizal Hussain (`hussainfaizal131@gmail.com`)
+
