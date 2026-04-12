@@ -215,33 +215,6 @@ The package exports:
 
 This repository's demo app uses **`bootstrapApplication`**, **`provideRouter`**, and a standalone root component that imports **`GetPhotoComponent`** directly.
 
-## GitHub Pages (live demo)
-
-The workflow [`.github/workflows/github-pages.yml`](.github/workflows/github-pages.yml) builds with **`baseHref: /get-my-photo/`** (for `https://<user>.github.io/get-my-photo/`) and deploys with **GitHub Actions**.
-
-1. Push these changes to your default branch (`main` or `master`).
-2. In the repo on GitHub: **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions** (not “Deploy from a branch”).
-3. Open **Actions**, wait for **GitHub Pages** to finish, then visit **`https://faiz-exe.github.io/get-my-photo/`** (replace with your username if different).
-
-If the repository name is not **`get-my-photo`**, edit **`baseHref`** in `angular.json` under `lib-getMyPhoto → architect → build → configurations → github-pages` to `/<your-repo-name>/`, then push again.
-
-### Deploy fails with `HttpError: Not Found` / “Failed to create deployment (status: 404)”
-
-That response comes from GitHub’s Pages API when **Pages is not set up for Actions-based deploys** (or the feature is not available on the repo).
-
-1. **Settings → Pages → Build and deployment → Source** must be **GitHub Actions**, not *Deploy from a branch*. Save, then **re-run** the failed workflow (or push an empty commit).
-2. **Settings → Actions → General → Workflow permissions**: if the default token is restricted, allow **Read and write** for workflows (or ensure your org policy allows **`pages: write`** for `GITHUB_TOKEN`). The workflow already declares `permissions: pages: write` and `id-token: write`.
-3. **Private repositories** need a GitHub plan that includes Pages; otherwise enable Pages on a **public** repo or use another host.
-4. Deployments from **forks** do not publish to the parent’s GitHub Pages the same way; use the canonical repo or a different deployment target.
-
-Local check: `npm run build:pages` writes to `dist/lib-getMyPhoto/` (and copies `index.html` to **`404.html`** so client-side routes behave on Pages).
-
-## Browser requirements
-
-- Camera (and usually **`MediaRecorder`**) need a **secure context** (`https://` or `http://localhost`)
-- User must grant **camera** permission
-- Video recording quality and container (**WebM** vs **MP4**) depend on the browser; there is **no audio** track in the current implementation
-
 ## Author
 
 Faizal Hussain (`hussainfaizal131@gmail.com`)
