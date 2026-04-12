@@ -1,11 +1,20 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "outDir": "./out-tsc/spec",
     "types": [
       "jasmine",
       "node"
-    ]
+    ],
+    "paths": {
+      "get-my-photo": [
+        "projects/get-my-photo/src/public-api.ts"
+      ],
+      "get-my-photo/*": [
+        "projects/get-my-photo/src/*"
+      ]
+    }
   },
   "files": [
     "src/test.ts",

@@ -1,22 +1,13 @@
-
-
-
-<div>
+<div class="get-photo-root">
   @if (videoPreview) {
-    <video autoplay id="captureFrame" ></video>
+    <video autoplay playsinline id="captureFrame"></video>
   }
 
   @if (imagepreview) {
-    <img [src]='src'>
+    <img [src]="src" alt="Captured preview" />
   }
+
   @if (error && showError) {
-    <h3>{{errorMessage}}</h3>
+    <h3 class="error-text">{{ errorMessage }}</h3>
   }
-
 </div>
-
-
-
-<!-- <canvas id="output" style="display: none;"></canvas> -->
-
-

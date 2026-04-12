@@ -5,7 +5,7 @@ export class AppPage {
     return browser.get(browser.baseUrl) as Promise<any>;
   }
 
-  getTitleText() {
-    return element(by.css('getPhoto-root h1')).getText() as Promise<string>;
+  getGreetingText() {
+    return element(by.css('getPhoto-root div')).getText() as Promise<string>;
   }
 }

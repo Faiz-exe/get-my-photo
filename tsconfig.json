@@ -16,10 +16,10 @@
     ],
     "paths": {
       "get-my-photo": [
-        "dist/get-my-photo"
+        "projects/get-my-photo/src/public-api.ts"
       ],
       "get-my-photo/*": [
-        "dist/get-my-photo/*"
+        "projects/get-my-photo/src/*"
       ]
     },
     "useDefineForClassFields": false
