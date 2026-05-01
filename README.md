@@ -2,7 +2,7 @@
 
 Capture photos and short video clips from the browser camera in Angular apps.
 
-[npm package](https://www.npmjs.com/package/get-my-photo) | [GitHub repository](https://github.com/Faiz-exe/get-my-photo)
+[GitHub repository](https://github.com/Faiz-exe/get-my-photo)
 
 ## Features
 
@@ -218,3 +218,4 @@ This repository's demo app uses **`bootstrapApplication`**, **`provideRouter`**,
 ## Author
 
 Faizal Hussain (`hussainfaizal131@gmail.com`)
+

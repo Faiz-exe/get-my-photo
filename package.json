@@ -10,7 +10,9 @@
     "start:mobile": "ng serve lib-getMyPhoto --host 0.0.0.0 --ssl --allowed-hosts all",
     "build": "ng build",
     "build:lib": "ng build getMyPhoto",
-    "build:pages": "ng build lib-getMyPhoto --configuration github-pages && cp dist/lib-getMyPhoto/index.html dist/lib-getMyPhoto/404.html",
+    "build:pages": "ng build lib-getMyPhoto --configuration github-pages && cp dist/lib-getMyPhoto/index.html dist/lib-getMyPhoto/404.html && node -e \"require('fs').writeFileSync('dist/lib-getMyPhoto/.nojekyll','')\"",
+    "sync-readme": "node -e \"require('fs').copyFileSync('README.md','projects/get-my-photo/README.md')\"",
+    "publish:lib": "npm run sync-readme && ng build getMyPhoto && npm publish ./dist/get-my-photo",
     "test": "ng test"
   },
   "private": true,
